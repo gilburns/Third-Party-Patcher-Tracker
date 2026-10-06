@@ -6,7 +6,7 @@ interface Props {
   description?: string;
 }
 const { title, description = 'Version history for macOS apps tracked through Installomator labels.' } = Astro.props;
-const siteName = 'Third Party Patcher Tracker';
+const siteName = 'Installomator Label Tracker';
 const MAIN_SITE = 'https://thirdpartypatcher.org/';
 const fullTitle = title ? `${title} · ${siteName}` : siteName;
 const path = Astro.url.pathname;
