@@ -1,0 +1,75 @@
+name: Build and deploy site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # The tracker runs at 06:00 and 18:00 UTC and takes up to ~45 minutes,
+  # so rebuild a little after each run picks up new versions.
+  schedule:
+    - cron: '30 7,19 * * *'
+  workflow_dispatch:
+  # Lets the data repos trigger a rebuild right after they change.
+  repository_dispatch:
+    types: [data-updated]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check out version history
+        uses: actions/checkout@v7
+        with:
+          repository: gilburns/Installomator-Tracker
+          path: data-src/tracker
+          sparse-checkout: TrackedLabelDetails
+
+      - name: Check out metadata and icons
+        uses: actions/checkout@v7
+        with:
+          repository: gilburns/Installomator-Metadata
+          path: data-src/metadata
+          sparse-checkout: |
+            Metadata
+            Icons
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Merge data and resize icons
+        run: npm run data
+
+      - name: Build site
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

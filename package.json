@@ -1,0 +1,16 @@
+{
+  "name": "third-party-patcher-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "data": "node scripts/build-data.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^7.3.5",
+    "plist": "^5.0.0",
+    "sharp": "^0.35.5"
+  }
+}

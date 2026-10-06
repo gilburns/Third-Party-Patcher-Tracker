@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import { RECENT_COUNT, appHref, formatDay, iconSrc, recentReleases } from '../lib/apps.js';
+
+const recent = recentReleases(RECENT_COUNT);
+
+// Group by UTC day for the list headings.
+const days = [];
+for (const r of recent) {
+  const day = r.timeStamp.slice(0, 10);
+  if (days.at(-1)?.day !== day) days.push({ day, items: [] });
+  days.at(-1).items.push(r);
+}
+---
+<Base>
+  <section class="intro">
+    <h1>Recently updated</h1>
+    <p class="muted">
+      The latest {RECENT_COUNT} versions picked up by the tracker, which checks every Installomator label twice a day.
+      Dates are when a version was first seen, not the vendor's release date.
+    </p>
+    <form action="/browse/" method="get" role="search">
+      <input class="search" type="search" name="q" placeholder="Search by name, publisher, keyword or category" aria-label="Search titles" />
+    </form>
+  </section>
+
+  {days.map(({ day, items }) => (
+    <section class="day">
+      <h2>{formatDay(day)}</h2>
+      <ul class="card release-list">
+        {items.map((r) => (
+          <li>
+            <a class="release" href={appHref(r.app.label)}>
+              <img class="icon" src={iconSrc(r.app, 96)} alt="" width="40" height="40" loading="lazy" />
+              <span class="what">
+                <span class="name">{r.app.name}</span>
+                <span class="muted small">{r.app.publisher || r.app.label}</span>
+              </span>
+              <span class="right">
+                {r.firstSeen && <span class="chip new">New title</span>}
+                <span class="version">{r.version}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <p class="more"><a href="/browse/">Browse all titles →</a></p>
+</Base>
+
+<style>
+  .intro { margin-bottom: 24px; }
+  .intro p { margin: 0 0 16px; max-width: 70ch; }
+  .day { margin-bottom: 20px; }
+  .day h2 { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+  .release-list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+  .release-list li + li { border-top: 1px solid var(--border); }
+  .release { display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: var(--text); }
+  .release:hover { text-decoration: none; background: var(--bg); }
+  .what { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .name { font-weight: 600; }
+  .small { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .right { display: flex; align-items: center; gap: 10px; text-align: right; max-width: 45%; }
+  .right .version { font-weight: 500; }
+  .more { margin-top: 24px; }
+</style>
