@@ -7,6 +7,7 @@ interface Props {
 }
 const { title, description = 'Version history for macOS apps tracked through Installomator labels.' } = Astro.props;
 const siteName = 'Third Party Patcher Tracker';
+const MAIN_SITE = 'https://thirdpartypatcher.org/';
 const fullTitle = title ? `${title} · ${siteName}` : siteName;
 const path = Astro.url.pathname;
 ---
@@ -30,6 +31,7 @@ const path = Astro.url.pathname;
         <nav>
           <a href="/" aria-current={path === '/' ? 'page' : undefined}>Recent</a>
           <a href="/browse/" aria-current={path.startsWith('/browse') ? 'page' : undefined}>Browse</a>
+          <a class="main-site" href={MAIN_SITE}><span class="long">Third Party </span>Patcher <span aria-hidden="true">↗</span></a>
         </nav>
       </div>
     </header>
@@ -38,12 +40,15 @@ const path = Astro.url.pathname;
     </main>
     <footer class="site-footer">
       <div class="wrap">
+        <p class="patcher">
+          <a href={MAIN_SITE}>Third Party Patcher</a> keeps these apps up to date on your Macs automatically, with any MDM.
+        </p>
         <p>
           Tracking {apps.length.toLocaleString('en-US')} titles. Data last changed {formatDate(lastUpdated())}.
         </p>
         <p>
-          Built from <a href={SOURCES.tracker}>Installomator-Tracker</a> and
-          <a href={SOURCES.metadata}>Installomator-Metadata</a>, using labels from
+          Built from <a href={SOURCES.tracker}>Installomator-Tracker</a>{' '}and{' '}
+          <a href={SOURCES.metadata}>Installomator-Metadata</a>, using labels from{' '}
           <a href={SOURCES.installomator}>Installomator</a>.
         </p>
       </div>
@@ -101,10 +106,19 @@ const path = Astro.url.pathname;
   .site-header nav a { color: var(--muted); padding: 6px 12px; border-radius: 8px; }
   .site-header nav a:hover { text-decoration: none; background: var(--bg); }
   .site-header nav a[aria-current='page'] { color: var(--accent); background: var(--accent-soft); }
+  .site-header nav a.main-site { color: var(--accent); border: 1px solid var(--accent-soft); margin-left: 4px; }
+  .site-header nav a.main-site:hover { background: var(--accent-soft); }
+  .site-header nav { align-items: center; }
+  .site-header nav a { white-space: nowrap; }
+  @media (max-width: 420px) {
+    .site-header nav a { padding: 6px 8px; }
+    .site-header nav a.main-site .long { display: none; }
+  }
   @media (max-width: 520px) { .brand span { display: none; } }
 
   .site-footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 20px 0 32px; }
   .site-footer p { margin: 4px 0; }
+  .site-footer .patcher { color: var(--text); font-size: 14px; margin-bottom: 8px; }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
   .icon { border-radius: 22%; flex: none; object-fit: contain; }
