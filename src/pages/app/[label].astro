@@ -1,0 +1,121 @@
+---
+import Base from '../../layouts/Base.astro';
+import { apps, formatDate, iconSrc, isUrl } from '../../lib/apps.js';
+
+export function getStaticPaths() {
+  return apps.map((app) => ({ params: { label: app.label }, props: { app } }));
+}
+
+const { app } = Astro.props;
+const latest = app.versions[0];
+const linkLabels = { homepage: 'Website', documentation: 'Documentation', privacy: 'Privacy policy' };
+const hasIntel = app.versions.some((v) => v.downloadURLi386);
+---
+<Base title={app.name} description={app.description || `Version history for ${app.name}.`}>
+  <p class="crumbs"><a href="/browse/">Browse</a> / <a href={`/browse/?category=${encodeURIComponent(app.category)}`}>{app.category}</a></p>
+
+  <section class="card head">
+    <img class="icon" src={iconSrc(app, 256)} alt="" width="112" height="112" />
+    <div class="head-text">
+      <h1>{app.name}</h1>
+      {app.publisher && <p class="muted publisher">{app.publisher}</p>}
+      <p class="latest">
+        Latest <strong class="version">{latest.version}</strong>{' '}
+        <span class="muted">· seen {formatDate(latest.timeStamp)}</span>
+      </p>
+      {app.description && <p class="desc">{app.description}</p>}
+      {Object.keys(app.links).length > 0 && (
+        <p class="links">
+          {Object.entries(app.links).map(([k, url]) => <a href={url} rel="noopener">{linkLabels[k] ?? k}</a>)}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <section class="facts card">
+    <dl>
+      <div><dt>Installomator label</dt><dd><code>{app.label}</code></dd></div>
+      <div><dt>Category</dt><dd><a href={`/browse/?category=${encodeURIComponent(app.category)}`}>{app.category}</a></dd></div>
+      {app.bundleId && <div><dt>Bundle ID</dt><dd><code>{app.bundleId}</code></dd></div>}
+      {latest.teamID && <div><dt>Team ID</dt><dd><code>{latest.teamID}</code></dd></div>}
+      {latest.type && <div><dt>Package type</dt><dd>{latest.type}</dd></div>}
+      {app.blockingProcesses.length > 0 && <div><dt>Blocking processes</dt><dd>{app.blockingProcesses.join(', ')}</dd></div>}
+    </dl>
+    {app.keywords.length > 0 && (
+      <p class="keywords">
+        {app.keywords.map((k) => <a class="chip" href={`/browse/?q=${encodeURIComponent(k)}`}>{k}</a>)}
+      </p>
+    )}
+  </section>
+
+  <section>
+    <h2>Version history</h2>
+    <p class="muted note">
+      {app.versions.length} {app.versions.length === 1 ? 'version' : 'versions'} recorded.
+      "Seen" is when the tracker first found the version, not the vendor's release date.
+    </p>
+    <div class="card table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Seen</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          {app.versions.map((v) => (
+            <tr>
+              <td class="version">
+                {v.version}
+                {v.firstSeen && app.versions.length > 1 && <span class="chip new">First seen</span>}
+              </td>
+              <td class="nowrap" title={v.timeStamp}>{formatDate(v.timeStamp)}</td>
+              <td><div class="downloads">
+                {isUrl(v.downloadURL) && (
+                  <a href={v.downloadURL} rel="nofollow noopener">{hasIntel ? 'Apple silicon' : 'Download'}{v.type && ` (${v.type})`}</a>
+                )}
+                {isUrl(v.downloadURLi386) && (
+                  <a href={v.downloadURLi386} rel="nofollow noopener">Intel{v.type && ` (${v.type})`}</a>
+                )}
+              </div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .crumbs { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  .head { display: flex; gap: 20px; padding: 20px; align-items: flex-start; }
+  .head-text { min-width: 0; }
+  .head h1 { font-size: 26px; margin-bottom: 2px; }
+  .publisher { margin: 0 0 8px; }
+  .latest { margin: 0 0 10px; }
+  .desc { margin: 0 0 10px; max-width: 70ch; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; }
+  @media (max-width: 560px) {
+    .head { flex-direction: column; }
+    .head .icon { width: 80px; height: 80px; }
+  }
+
+  .facts { margin: 16px 0 28px; padding: 16px 20px; }
+  .facts dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 24px; margin: 0; }
+  .facts dt { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .facts dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+  .keywords { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+
+  h2 { font-size: 20px; }
+  .note { margin: 0 0 10px; font-size: 13px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  td.version { font-weight: 500; max-width: 360px; }
+  td.version .chip { margin-left: 6px; }
+  .nowrap { white-space: nowrap; }
+  .downloads { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+</style>

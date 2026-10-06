@@ -1,0 +1,125 @@
+---
+import { SOURCES, apps, formatDate, lastUpdated } from '../lib/apps.js';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = 'Version history for macOS apps tracked through Installomator labels.' } = Astro.props;
+const siteName = 'Third Party Patcher Tracker';
+const fullTitle = title ? `${title} · ${siteName}` : siteName;
+const path = Astro.url.pathname;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={new URL(path, Astro.site)} />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          <img src="/favicon.svg" alt="" width="28" height="28" />
+          <span>{siteName}</span>
+        </a>
+        <nav>
+          <a href="/" aria-current={path === '/' ? 'page' : undefined}>Recent</a>
+          <a href="/browse/" aria-current={path.startsWith('/browse') ? 'page' : undefined}>Browse</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Tracking {apps.length.toLocaleString('en-US')} titles. Data last changed {formatDate(lastUpdated())}.
+        </p>
+        <p>
+          Built from <a href={SOURCES.tracker}>Installomator-Tracker</a> and
+          <a href={SOURCES.metadata}>Installomator-Metadata</a>, using labels from
+          <a href={SOURCES.installomator}>Installomator</a>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --text: #1b1f27;
+    --muted: #5d6675;
+    --border: #e1e5eb;
+    --accent: #2563eb;
+    --accent-soft: #e6eeff;
+    --new: #0f7b4b;
+    --new-soft: #dcf5e8;
+    --radius: 12px;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101318;
+      --surface: #181c23;
+      --text: #e6e9ef;
+      --muted: #98a1b0;
+      --border: #2a303a;
+      --accent: #6d9cff;
+      --accent-soft: #1d2a45;
+      --new: #5dd39e;
+      --new-soft: #173326;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; }
+  code { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  main.wrap { padding-top: 24px; padding-bottom: 48px; min-height: 70vh; }
+
+  .site-header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; }
+  .brand:hover { text-decoration: none; }
+  .site-header nav { display: flex; gap: 4px; }
+  .site-header nav a { color: var(--muted); padding: 6px 12px; border-radius: 8px; }
+  .site-header nav a:hover { text-decoration: none; background: var(--bg); }
+  .site-header nav a[aria-current='page'] { color: var(--accent); background: var(--accent-soft); }
+  @media (max-width: 520px) { .brand span { display: none; } }
+
+  .site-footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 20px 0 32px; }
+  .site-footer p { margin: 4px 0; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .icon { border-radius: 22%; flex: none; object-fit: contain; }
+  .muted { color: var(--muted); }
+  .chip {
+    display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px;
+    background: var(--accent-soft); color: var(--accent); white-space: nowrap;
+  }
+  .chip.new { background: var(--new-soft); color: var(--new); }
+  .version { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+  .search {
+    width: 100%; padding: 10px 14px; font-size: 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  .search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  select.search { width: auto; }
+</style>

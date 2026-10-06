@@ -1,0 +1,115 @@
+---
+import Base from '../layouts/Base.astro';
+import { apps, appHref, categories, formatDate, iconSrc } from '../lib/apps.js';
+
+const cats = categories();
+
+// Several labels share an app name (e.g. pkg and dmg variants); show the label to tell them apart.
+const nameCounts = new Map();
+for (const a of apps) nameCounts.set(a.name, (nameCounts.get(a.name) ?? 0) + 1);
+const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].filter(Boolean).join(' · ') : a.publisher || a.label);
+---
+<Base title="Browse" description="Search every tracked macOS title by name, publisher, keyword or category.">
+  <h1>Browse titles</h1>
+  <div class="filters">
+    <input id="q" class="search" type="search" placeholder="Search by name, publisher, keyword or label" aria-label="Search titles" autocomplete="off" />
+    <select id="cat" class="search" aria-label="Category">
+      <option value="">All categories</option>
+      {cats.map((c) => <option value={c.name}>{c.name} ({c.count})</option>)}
+    </select>
+    <select id="sort" class="search" aria-label="Sort">
+      <option value="name">Name</option>
+      <option value="updated">Recently updated</option>
+    </select>
+  </div>
+  <p id="count" class="muted" aria-live="polite">{apps.length} titles</p>
+
+  <ul id="grid" class="grid">
+    {apps.map((a) => (
+      <li
+        data-name={a.name.toLowerCase()}
+        data-text={[a.name, a.label, a.publisher, a.category, a.keywords.join(' '), a.bundleId].join(' ').toLowerCase()}
+        data-cat={a.category}
+        data-updated={a.versions[0].timeStamp}
+      >
+        <a class="card tile" href={appHref(a.label)}>
+          <img class="icon" src={iconSrc(a, 96)} alt="" width="48" height="48" loading="lazy" />
+          <span class="info">
+            <span class="name">{a.name}</span>
+            <span class="muted small">{subtitle(a)}</span>
+            <span class="meta">
+              <span class="version">{a.versions[0].version}</span>
+              <span class="muted small">· {formatDate(a.versions[0].timeStamp)}</span>
+            </span>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+  <p id="empty" class="muted" hidden>No titles match.</p>
+</Base>
+
+<script>
+  const q = document.getElementById('q') as HTMLInputElement;
+  const cat = document.getElementById('cat') as HTMLSelectElement;
+  const sort = document.getElementById('sort') as HTMLSelectElement;
+  const grid = document.getElementById('grid')!;
+  const count = document.getElementById('count')!;
+  const empty = document.getElementById('empty')!;
+  const items = [...grid.children] as HTMLElement[];
+  const byName = [...items];
+  const byUpdated = [...items].sort((a, b) => (b.dataset.updated ?? '').localeCompare(a.dataset.updated ?? ''));
+
+  // Restore filters from the URL so searches from the home page and shared links work.
+  const params = new URLSearchParams(location.search);
+  q.value = params.get('q') ?? '';
+  cat.value = params.get('category') ?? '';
+  sort.value = params.get('sort') === 'updated' ? 'updated' : 'name';
+
+  let currentSort = '';
+
+  function apply() {
+    const terms = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+    const c = cat.value;
+    let shown = 0;
+    const order = sort.value === 'updated' ? byUpdated : byName;
+    if (sort.value !== currentSort) {
+      grid.append(...order);
+      currentSort = sort.value;
+    }
+    for (const el of order) {
+      const text = el.dataset.text ?? '';
+      const match = (!c || el.dataset.cat === c) && terms.every((t) => text.includes(t));
+      el.hidden = !match;
+      if (match) shown++;
+    }
+    count.textContent = `${shown} ${shown === 1 ? 'title' : 'titles'}`;
+    empty.hidden = shown > 0;
+
+    const next = new URLSearchParams();
+    if (q.value) next.set('q', q.value);
+    if (c) next.set('category', c);
+    if (sort.value !== 'name') next.set('sort', sort.value);
+    const qs = next.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+  }
+
+  q.addEventListener('input', apply);
+  cat.addEventListener('change', apply);
+  sort.addEventListener('change', apply);
+  apply();
+</script>
+
+<style>
+  .filters { display: flex; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
+  .filters #q { flex: 1 1 280px; }
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .tile { display: flex; gap: 12px; padding: 12px; color: var(--text); height: 100%; }
+  .tile:hover { text-decoration: none; border-color: var(--accent); }
+  .info { display: flex; flex-direction: column; min-width: 0; }
+  .name { font-weight: 600; }
+  .small { font-size: 13px; }
+  .meta { display: flex; gap: 6px; align-items: baseline; font-size: 13px; min-width: 0; }
+  .meta .version { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .info > .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
