@@ -117,7 +117,8 @@ async function main() {
     }
     if (!Array.isArray(history) || history.length === 0) return null;
 
-    const md = (await readMetadata(label)) ?? {};
+    const plistData = await readMetadata(label);
+    const md = plistData ?? {};
     const hasIcon = await buildIcon(label);
 
     // Static-URL labels: the download link always serves the latest version.
@@ -161,6 +162,7 @@ async function main() {
       bundleId: str(md.AppID),
       links,
       hasIcon,
+      hasMetadata: Boolean(plistData),
       staticUrl,
       historyReplaced,
       trackedSince: since,

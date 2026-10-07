@@ -11,6 +11,11 @@ export const SOURCES = {
   installomator: 'https://github.com/Installomator/Installomator',
 };
 
+// Original files in Installomator-Metadata, served with CORS so the page can save them.
+const METADATA_RAW = 'https://raw.githubusercontent.com/gilburns/Installomator-Metadata/main';
+export const metadataPlistUrl = (label) => `${METADATA_RAW}/Metadata/${encodeURIComponent(label)}.plist`;
+export const metadataIconUrl = (label) => `${METADATA_RAW}/Icons/${encodeURIComponent(label)}.png`;
+
 export const isUrl = (v) => typeof v === 'string' && /^https?:\/\//i.test(v);
 
 export const iconSrc = (app, size = 96) =>

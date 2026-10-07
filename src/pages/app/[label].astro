@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { apps, formatDate, iconSrc, isUrl } from '../../lib/apps.js';
+import { apps, formatDate, iconSrc, isUrl, metadataIconUrl, metadataPlistUrl } from '../../lib/apps.js';
+import CopyButton from '../../components/CopyButton.astro';
 
 export function getStaticPaths() {
   return apps.map((app) => ({ params: { label: app.label }, props: { app } }));
@@ -23,7 +24,7 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
         Latest <strong class="version">{latest.version}</strong>{' '}
         <span class="muted">· seen {formatDate(latest.timeStamp)}</span>
       </p>
-      {app.description && <p class="desc">{app.description}</p>}
+      {app.description && <p class="desc">{app.description} <CopyButton value={app.description} what="description" /></p>}
       {Object.keys(app.links).length > 0 && (
         <p class="links">
           {Object.entries(app.links).map(([k, url]) => <a href={url} rel="noopener">{linkLabels[k] ?? k}</a>)}
@@ -34,16 +35,33 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
 
   <section class="facts card">
     <dl>
-      <div><dt>Installomator label</dt><dd><code>{app.label}</code></dd></div>
+      <div><dt>Installomator label</dt><dd><code>{app.label}</code><CopyButton value={app.label} what="label" /></dd></div>
       <div><dt>Category</dt><dd><a href={`/browse/?category=${encodeURIComponent(app.category)}`}>{app.category}</a></dd></div>
-      {app.bundleId && <div><dt>Bundle ID</dt><dd><code>{app.bundleId}</code></dd></div>}
-      {latest.teamID && <div><dt>Team ID</dt><dd><code>{latest.teamID}</code></dd></div>}
+      {app.bundleId && <div><dt>Bundle ID</dt><dd><code>{app.bundleId}</code><CopyButton value={app.bundleId} what="bundle ID" /></dd></div>}
+      {latest.teamID && <div><dt>Team ID</dt><dd><code>{latest.teamID}</code><CopyButton value={latest.teamID} what="team ID" /></dd></div>}
       {latest.type && <div><dt>Package type</dt><dd>{latest.type}</dd></div>}
       {app.blockingProcesses.length > 0 && <div><dt>Blocking processes</dt><dd>{app.blockingProcesses.join(', ')}</dd></div>}
     </dl>
     {app.keywords.length > 0 && (
       <p class="keywords">
         {app.keywords.map((k) => <a class="chip" href={`/browse/?q=${encodeURIComponent(k)}`}>{k}</a>)}
+      </p>
+    )}
+    {(app.hasMetadata || app.hasIcon) && (
+      <p class="files">
+        {app.hasMetadata && (
+          <a class="file-btn" href={metadataPlistUrl(app.label)} data-save-as={`${app.label}.plist`}>
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 3v9m0 0-3.5-3.5M10 12l3.5-3.5M4 15.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Metadata plist
+          </a>
+        )}
+        {app.hasIcon && (
+          <a class="file-btn" href={metadataIconUrl(app.label)} data-save-as={`${app.label}.png`}>
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 3v9m0 0-3.5-3.5M10 12l3.5-3.5M4 15.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Original icon (PNG)
+          </a>
+        )}
+        <span class="muted small">From <a href="https://github.com/gilburns/Installomator-Metadata">Installomator-Metadata</a></span>
       </p>
     )}
   </section>
@@ -103,6 +121,29 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
   </section>
 </Base>
 
+<script>
+  // Save the Installomator-Metadata files instead of opening them: raw.githubusercontent.com
+  // allows cross-origin fetches, and a blob URL lets the download attribute name the file.
+  // If the fetch fails, the link falls back to opening the raw file.
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-save-as]')) {
+    link.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch(link.href);
+        if (!res.ok) throw new Error(String(res.status));
+        const url = URL.createObjectURL(await res.blob());
+        const a = Object.assign(document.createElement('a'), { href: url, download: link.dataset.saveAs });
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } catch {
+        window.location.href = link.href;
+      }
+    });
+  }
+</script>
+
 <style>
   .crumbs { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
   .head { display: flex; gap: 20px; padding: 20px; align-items: flex-start; }
@@ -122,6 +163,14 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
   .facts dt { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .facts dd { margin: 2px 0 0; overflow-wrap: anywhere; }
   .keywords { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
+  .facts dd code { margin-right: 2px; }
+  .files { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+  .file-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px;
+  }
+  .file-btn:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+  .small { font-size: 13px; }
 
   h2 { font-size: 20px; }
   .note { margin: 0 0 10px; font-size: 13px; max-width: 80ch; }
