@@ -23,11 +23,13 @@ The site is static. It's rebuilt from two data repos and published with GitHub P
 Requires Node 22.12 or later.
 
 ```sh
-git clone --depth 1 https://github.com/gilburns/Installomator-Tracker data-src/tracker
+git clone --filter=blob:none https://github.com/gilburns/Installomator-Tracker data-src/tracker
 git clone --depth 1 https://github.com/gilburns/Installomator-Metadata data-src/metadata
 npm ci
 npm run data      # writes src/data/, public/data/ and public/icons/{96,256}/
 npm run dev       # or: npm run build && npm run preview
 ```
+
+Clone the tracker without `--depth 1` (for example with `--filter=blob:none`) to get "New title" badges and static-URL detection right; both use the history of `TrackedLabelDetails/`. A shallow clone still builds.
 
 `TRACKER_DIR` and `METADATA_DIR` point the data script at existing checkouts instead of `data-src/`.

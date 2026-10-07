@@ -53,7 +53,20 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
     <p class="muted note">
       {app.versions.length} {app.versions.length === 1 ? 'version' : 'versions'} recorded.
       "Seen" is when the tracker first found the version, not the vendor's release date.
+      A version without a download link belongs to a label whose link always serves the latest release.
     </p>
+    {app.staticUrl && (
+      <div class="card callout">
+        <strong>This label's download link always serves the latest version.</strong>{' '}
+        {app.versions.length === 1
+          ? 'The tracker used to replace the previous version each time a new one appeared, so this is the only version recorded so far. New versions will be added here as they appear, and only the newest one will have a download link.'
+          : <>
+              Only the newest entry has a download link. Older entries show when each version was seen,
+              but the link now serves the latest version instead.
+              {app.historyReplaced && ` Versions found before ${formatDate(app.versions.at(-1).timeStamp)} weren't recorded.`}
+            </>}
+      </div>
+    )}
     <div class="card table-wrap">
       <table>
         <thead>
@@ -77,6 +90,9 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
                 )}
                 {isUrl(v.downloadURLi386) && (
                   <a href={v.downloadURLi386} rel="nofollow noopener">Intel{v.type && ` (${v.type})`}</a>
+                )}
+                {!isUrl(v.downloadURL) && !isUrl(v.downloadURLi386) && (
+                  <span class="muted" title="The download link now serves a newer version">No longer available</span>
                 )}
               </div></td>
             </tr>
@@ -108,7 +124,8 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
   .keywords { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 0; }
 
   h2 { font-size: 20px; }
-  .note { margin: 0 0 10px; font-size: 13px; }
+  .note { margin: 0 0 10px; font-size: 13px; max-width: 80ch; }
+  .callout { margin: 0 0 12px; padding: 12px 16px; font-size: 14px; border-left: 3px solid var(--accent); }
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }

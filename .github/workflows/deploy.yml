@@ -32,6 +32,11 @@ jobs:
           repository: gilburns/Installomator-Tracker
           path: data-src/tracker
           sparse-checkout: TrackedLabelDetails
+          # Full commit history (without old file contents) tells the build
+          # when each label was first tracked, for "New title" and to spot
+          # static-URL labels whose earlier versions were overwritten.
+          fetch-depth: 0
+          filter: blob:none
 
       - name: Check out metadata and icons
         uses: actions/checkout@v7
