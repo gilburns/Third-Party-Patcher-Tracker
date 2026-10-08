@@ -26,7 +26,13 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
       <option value="updated">Recently updated</option>
     </select>
   </div>
-  <p id="count" class="muted" aria-live="polite">{apps.length} titles</p>
+  <p class="status">
+    <span id="count" class="muted" aria-live="polite">{apps.length} titles</span>
+    <span id="pub-filter" class="chip pub-chip" hidden>
+      Publisher: <strong id="pub-name"></strong>
+      <button id="pub-clear" type="button" aria-label="Show all publishers" title="Show all publishers">✕</button>
+    </span>
+  </p>
 
   <ul id="grid" class="grid">
     {apps.map((a) => (
@@ -34,6 +40,7 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
         data-name={a.name.toLowerCase()}
         data-text={[a.name, a.label, a.publisher, a.category, a.keywords.join(' '), a.bundleId].join(' ').toLowerCase()}
         data-cat={a.category}
+        data-pub={a.publisher}
         data-updated={a.versions[0].timeStamp}
       >
         <a class="card tile" href={appHref(a.label)}>
@@ -60,6 +67,8 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
   const grid = document.getElementById('grid')!;
   const count = document.getElementById('count')!;
   const empty = document.getElementById('empty')!;
+  const pubFilter = document.getElementById('pub-filter')!;
+  const pubName = document.getElementById('pub-name')!;
   const items = [...grid.children] as HTMLElement[];
   const byName = [...items];
   const byUpdated = [...items].sort((a, b) => (b.dataset.updated ?? '').localeCompare(a.dataset.updated ?? ''));
@@ -69,6 +78,8 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
   q.value = params.get('q') ?? '';
   cat.value = params.get('category') ?? '';
   sort.value = params.get('sort') === 'updated' ? 'updated' : 'name';
+  // Set by the publisher button on title pages; matches the publisher exactly.
+  let publisher = params.get('publisher') ?? '';
 
   let currentSort = '';
 
@@ -83,16 +94,19 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
     }
     for (const el of order) {
       const text = el.dataset.text ?? '';
-      const match = (!c || el.dataset.cat === c) && terms.every((t) => text.includes(t));
+      const match = (!c || el.dataset.cat === c) && (!publisher || el.dataset.pub === publisher) && terms.every((t) => text.includes(t));
       el.hidden = !match;
       if (match) shown++;
     }
     count.textContent = `${shown} ${shown === 1 ? 'title' : 'titles'}`;
     empty.hidden = shown > 0;
+    pubFilter.hidden = !publisher;
+    pubName.textContent = publisher;
 
     const next = new URLSearchParams();
     if (q.value) next.set('q', q.value);
     if (c) next.set('category', c);
+    if (publisher) next.set('publisher', publisher);
     if (sort.value !== 'name') next.set('sort', sort.value);
     const qs = next.toString();
     history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
@@ -101,6 +115,10 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
   q.addEventListener('input', apply);
   cat.addEventListener('change', apply);
   sort.addEventListener('change', apply);
+  document.getElementById('pub-clear')!.addEventListener('click', () => {
+    publisher = '';
+    apply();
+  });
   apply();
 </script>
 
@@ -109,6 +127,11 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
   .title-row h1 { margin: 0; }
   .filters { display: flex; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
   .filters #q { flex: 1 1 280px; }
+  .status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 0 0 1rem; }
+  .pub-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 2px 4px 2px 10px; white-space: normal; }
+  .pub-chip[hidden] { display: none; }
+  .pub-chip button { border: 0; background: none; color: inherit; cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 999px; }
+  .pub-chip button:hover { background: var(--surface); }
   .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
   .tile { display: flex; gap: 12px; padding: 12px; color: var(--text); height: 100%; }
   .tile:hover { text-decoration: none; border-color: var(--accent); }
