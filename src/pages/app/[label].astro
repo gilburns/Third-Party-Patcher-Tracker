@@ -11,6 +11,7 @@ const { app } = Astro.props;
 const latest = app.versions[0];
 const linkLabels = { homepage: 'Website', documentation: 'Documentation', privacy: 'Privacy policy' };
 const hasIntel = app.versions.some((v) => v.downloadURLi386);
+const publisherCount = app.publisher ? apps.filter((a) => a.publisher === app.publisher).length : 0;
 ---
 <Base title={app.name} description={app.description || `Version history for ${app.name}.`}>
   <p class="crumbs"><a href="/browse/">Browse</a> / <a href={`/browse/?category=${encodeURIComponent(app.category)}`}>{app.category}</a></p>
@@ -19,7 +20,14 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
     <img class="icon" src={iconSrc(app, 256)} alt="" width="112" height="112" />
     <div class="head-text">
       <h1>{app.name}</h1>
-      {app.publisher && <p class="muted publisher">{app.publisher}</p>}
+      {app.publisher && (
+        <p class="publisher">
+          <span class="muted">{app.publisher}</span>{' '}
+          <a class="chip" href={`/browse/?publisher=${encodeURIComponent(app.publisher)}`} title={`Browse all titles by ${app.publisher}`}>
+            {publisherCount === 1 ? '1 title' : `All ${publisherCount} titles`} →
+          </a>
+        </p>
+      )}
       <p class="latest">
         Latest <strong class="version">{latest.version}</strong>{' '}
         <span class="muted">· seen {formatDate(latest.timeStamp)}</span>
@@ -150,6 +158,8 @@ const hasIntel = app.versions.some((v) => v.downloadURLi386);
   .head-text { min-width: 0; }
   .head h1 { font-size: 26px; margin-bottom: 2px; }
   .publisher { margin: 0 0 8px; }
+  .publisher .chip { margin-left: 4px; vertical-align: 1px; }
+  .publisher .chip:hover { text-decoration: none; background: var(--accent); color: var(--surface); }
   .latest { margin: 0 0 10px; }
   .desc { margin: 0 0 10px; max-width: 70ch; }
   .links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; }
