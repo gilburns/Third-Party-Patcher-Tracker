@@ -1,0 +1,46 @@
+---
+// Small clipboard button that copies `value`; `what` names it for screen readers.
+interface Props {
+  value: string;
+  what: string;
+}
+const { value, what } = Astro.props;
+---
+<button type="button" class="copy-btn" data-copy={value} aria-label={`Copy ${what}`} title={`Copy ${what}`}>
+  <svg class="icon-copy" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><rect x="6.5" y="6.5" width="10" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13.5 4.5V4a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 4v8.5A1.5 1.5 0 0 0 5 14h1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+  <svg class="icon-done" viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span class="copy-status" aria-live="polite"></span>
+</button>
+
+<script>
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('button.copy-btn')) {
+    btn.addEventListener('click', async () => {
+      const status = btn.querySelector('.copy-status')!;
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy ?? '');
+        btn.classList.add('copied');
+        status.textContent = 'Copied';
+      } catch {
+        status.textContent = 'Copy failed';
+      }
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        status.textContent = '';
+      }, 1500);
+    });
+  }
+</script>
+
+<style>
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;
+    margin-left: 4px; padding: 3px; border: 0; border-radius: 6px;
+    background: none; color: var(--muted); cursor: pointer; font: inherit; font-size: 12px;
+  }
+  .copy-btn:hover { background: var(--accent-soft); color: var(--accent); }
+  .copy-btn .icon-done { display: none; }
+  .copy-btn.copied { color: var(--new); }
+  .copy-btn.copied .icon-copy { display: none; }
+  .copy-btn.copied .icon-done { display: inline; }
+  .copy-status:empty { display: none; }
+</style>
