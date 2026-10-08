@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import AboutSite from '../components/AboutSite.astro';
 import { apps, appHref, categories, formatDate, iconSrc } from '../lib/apps.js';
 
 const cats = categories();
@@ -10,7 +11,10 @@ for (const a of apps) nameCounts.set(a.name, (nameCounts.get(a.name) ?? 0) + 1);
 const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].filter(Boolean).join(' · ') : a.publisher || a.label);
 ---
 <Base title="Browse" description="Search every tracked macOS title by name, publisher, keyword or category.">
-  <h1>Browse titles</h1>
+  <div class="title-row">
+    <h1>Browse titles</h1>
+    <AboutSite />
+  </div>
   <div class="filters">
     <input id="q" class="search" type="search" placeholder="Search by name, publisher, keyword or label" aria-label="Search titles" autocomplete="off" />
     <select id="cat" class="search" aria-label="Category">
@@ -101,6 +105,8 @@ const subtitle = (a) => (nameCounts.get(a.name) > 1 ? [a.publisher, a.label].fil
 </script>
 
 <style>
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .5rem; }
+  .title-row h1 { margin: 0; }
   .filters { display: flex; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
   .filters #q { flex: 1 1 280px; }
   .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }

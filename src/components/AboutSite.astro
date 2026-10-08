@@ -1,0 +1,92 @@
+---
+// "About this site" button and the popover it opens. Used next to the page heading.
+import { SOURCES, apps } from '../lib/apps.js';
+
+const missingIcons = apps.filter((a) => !a.hasIcon).length;
+const missingMetadata = apps.filter((a) => !a.description).length;
+---
+<button type="button" class="info-btn" id="about-open" aria-haspopup="dialog" aria-controls="about">
+  <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="currentColor"/></svg>
+  About this site
+</button>
+
+<dialog id="about" class="about card" aria-labelledby="about-title">
+  <div class="about-head">
+    <h2 id="about-title">About this site</h2>
+    <button type="button" class="close" id="about-close" aria-label="Close">×</button>
+  </div>
+  <p>
+    This site is built from two open companion projects. Both are rebuilt into the site twice a day,
+    shortly after the tracker finishes its run.
+  </p>
+
+  <h3><a href={SOURCES.tracker}>Installomator-Tracker</a></h3>
+  <p>
+    Runs every <a href={SOURCES.installomator}>Installomator</a> label twice a day on a GitHub Actions Mac,
+    the same way Installomator resolves it, and records each new version it finds along with its download
+    URL, team ID and the time it was first seen. Over time that builds the version history you see on each
+    title page.
+  </p>
+
+  <h3><a href={SOURCES.metadata}>Installomator-Metadata</a></h3>
+  <p>
+    Adds what the labels themselves don't carry: each app's name, publisher, category, description,
+    keywords, website and documentation links, and its icon. Search, categories and the icons on this
+    site all come from here.
+  </p>
+
+  <h3>How they fit together</h3>
+  <p>
+    Each build matches the tracker's version history to the metadata by label name, turns the icons into
+    small web images, and publishes a page for every title along with the recent-updates list and search.
+  </p>
+
+  <div class="contribute">
+    <h3>Help fill the gaps</h3>
+    <p>
+      Right now {missingIcons} tracked {missingIcons === 1 ? 'title has' : 'titles have'} no icon and
+      {' '}{missingMetadata} {missingMetadata === 1 ? 'has' : 'have'} no description or category.{' '}
+      <a href={SOURCES.metadata}>Installomator-Metadata</a> welcomes contributions: open a pull request or an
+      issue there to add a missing icon or category, or to correct a description or link. Fixes to the
+      tracker itself are welcome in <a href={SOURCES.tracker}>Installomator-Tracker</a>.
+    </p>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('about') as HTMLDialogElement;
+  document.getElementById('about-open')!.addEventListener('click', () => dialog.showModal());
+  document.getElementById('about-close')!.addEventListener('click', () => dialog.close());
+  // Close when the backdrop (outside the panel) is clicked.
+  dialog.addEventListener('click', (e) => {
+    const r = dialog.getBoundingClientRect();
+    const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (!inside) dialog.close();
+  });
+</script>
+
+<style>
+  .info-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--accent);
+    font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .info-btn:hover { background: var(--accent-soft); }
+
+  .about {
+    width: min(620px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto;
+    padding: 20px 24px 24px; color: var(--text);
+  }
+  .about::backdrop { background: rgb(0 0 0 / .45); }
+  .about-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .about-head h2 { margin: 0; font-size: 20px; }
+  .about h3 { font-size: 16px; margin: 18px 0 4px; }
+  .about p { margin: 0 0 8px; }
+  .close {
+    border: 0; background: none; color: var(--muted); font-size: 26px; line-height: 1;
+    cursor: pointer; padding: 2px 6px; border-radius: 6px;
+  }
+  .close:hover { background: var(--bg); color: var(--text); }
+  .contribute { margin-top: 18px; padding: 2px 16px 8px; border-radius: 10px; background: var(--accent-soft); }
+  .contribute h3 { margin-top: 12px; }
+</style>
